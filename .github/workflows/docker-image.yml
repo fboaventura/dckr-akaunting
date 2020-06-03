@@ -6,19 +6,80 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  VERSION: $(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+  NGINX_IMAGE: akaunting-nginx
+  PHP_IMAGE: akaunting-php
+
 jobs:
 
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
+    - name: Check ENV variables
+      run: |
+        echo $VERSION
+        echo $NGINX_IMAGE
+        echo $PHP_IMAGE
+
     - name: Build the Akaunting NGINX Docker image
       run: |
-        cd /nginx
-        docker build . --file Dockerfile --tag akaunting-nginx:$(date +%s)
+        cd nginx
+        docker build . --file Dockerfile --tag $NGINX_IMAGE:$VERSION
+        
     - name: Build the Akaunting PHP Docker image
       run: |
-        cd /php
-        docker build . --file Dockerfile --tag akaunting-php:$(date +%s)
+        cd ../php
+        docker build . --file Dockerfile --tag $PHP_IMAGE:$VERSION
+
+  push:
+    # Ensure test job passes before pushing image.
+    needs: test
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the Akaunting NGINX Docker image
+        run: |
+          cd nginx
+          docker build . --file Dockerfile --tag $NGINX_IMAGE:$VERSION
+        
+      - name: Build the Akaunting PHP Docker image
+        run: |
+          cd ../php
+          docker build . --file Dockerfile --tag $PHP_IMAGE:$VERSION
+
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: |
+          NGINX_IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$NGINX_IMAGE
+          PHP_IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$PHP_IMAGE
+          
+          # Change all uppercase to lowercase
+          NGINX_IMAGE_ID=$(echo $NGINX_IMAGE_ID | tr '[A-Z]' '[a-z]')
+          PHP_IMAGE_ID=$(echo $PHP_IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from version
+          # VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          echo NGINX_IMAGE_ID=$NGINX_IMAGE_ID
+          echo PHP_IMAGE_ID=$PHP_IMAGE_ID
+          echo VERSION=$VERSION
+
+          docker tag $NGINX_IMAGE $NGINX_IMAGE_ID:$VERSION
+          docker push $NGINX_IMAGE_ID:$VERSION
+          docker tag $PHP_IMAGE $PHP_IMAGE_ID:$VERSION
+          docker push $PHP_IMAGE_ID:$VERSION
