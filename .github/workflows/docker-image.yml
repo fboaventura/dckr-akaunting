@@ -25,6 +25,8 @@ jobs:
         echo $VERSION
         echo $NGINX_IMAGE
         echo $PHP_IMAGE
+        echo "ls -l"
+        ls -l
 
     - name: Build the Akaunting NGINX Docker image
       run: |
@@ -35,7 +37,7 @@ jobs:
     - name: Build the Akaunting PHP Docker image
       run: |
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-        cd ../php
+        cd php
         docker build . --file Dockerfile --tag $PHP_IMAGE:$VERSION
 
   push:
@@ -60,7 +62,7 @@ jobs:
       - name: Build the Akaunting PHP Docker image
         run: |
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-          cd ../php
+          cd php
           docker build . --file Dockerfile --tag $PHP_IMAGE:$VERSION
 
       - name: Log into registry
