@@ -1,0 +1,24 @@
+name: Docker Images CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Akaunting NGINX Docker image
+      run: |
+        cd /nginx
+        docker build . --file Dockerfile --tag akaunting-nginx:$(date +%s)
+    - name: Build the Akaunting PHP Docker image
+      run: |
+        cd /php
+        docker build . --file Dockerfile --tag akaunting-php:$(date +%s)
