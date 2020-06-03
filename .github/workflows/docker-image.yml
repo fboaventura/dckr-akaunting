@@ -18,23 +18,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      
-    - name: Set VERSION
-      run: VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
     
     - name: Check ENV variables
       run: |
+        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
         echo $VERSION
         echo $NGINX_IMAGE
         echo $PHP_IMAGE
 
     - name: Build the Akaunting NGINX Docker image
       run: |
+        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
         cd nginx
         docker build . --file Dockerfile --tag $NGINX_IMAGE:$VERSION
         
     - name: Build the Akaunting PHP Docker image
       run: |
+        VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
         cd ../php
         docker build . --file Dockerfile --tag $PHP_IMAGE:$VERSION
 
@@ -53,11 +53,13 @@ jobs:
     
       - name: Build the Akaunting NGINX Docker image
         run: |
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           cd nginx
           docker build . --file Dockerfile --tag $NGINX_IMAGE:$VERSION
         
       - name: Build the Akaunting PHP Docker image
         run: |
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           cd ../php
           docker build . --file Dockerfile --tag $PHP_IMAGE:$VERSION
 
@@ -74,7 +76,7 @@ jobs:
           PHP_IMAGE_ID=$(echo $PHP_IMAGE_ID | tr '[A-Z]' '[a-z]')
 
           # Strip git ref prefix from version
-          # VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
 
           # Strip "v" prefix from tag name
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
