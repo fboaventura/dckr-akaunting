@@ -7,7 +7,6 @@ on:
     branches: [ master ]
 
 env:
-  VERSION: $(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
   NGINX_IMAGE: akaunting-nginx
   PHP_IMAGE: akaunting-php
 
@@ -19,6 +18,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      
+    - name: Set VERSION
+      run: VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+    
     - name: Check ENV variables
       run: |
         echo $VERSION
@@ -44,6 +47,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set VERSION
+        run: VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+    
       - name: Build the Akaunting NGINX Docker image
         run: |
           cd nginx
